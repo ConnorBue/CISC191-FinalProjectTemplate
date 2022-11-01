@@ -59,5 +59,4 @@ public class MergeSort <T extends ProfileData> {
             rightIndex++;
         }
     }
-
 }

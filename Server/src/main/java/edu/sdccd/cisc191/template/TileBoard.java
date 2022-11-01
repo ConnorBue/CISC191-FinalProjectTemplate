@@ -164,6 +164,7 @@ public class TileBoard implements TreasureHuntConstants{
     }
 
 
+    //updates the players score after each guess
     private void updateScore() {
         turnsUsed++;
         gameScore = 100 - (turnsUsed*4);

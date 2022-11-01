@@ -8,7 +8,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -18,8 +17,10 @@ import java.util.ArrayList;
  * -
  * This program runs a game called Treasure Hunt
  * The goal is to find all the treasure in the 5x5 plot of spaces.
- * Once all treasure is found a victory message is displayed and
- * the player can start a new game.
+ * Once all treasure is found a victory message is displayed with
+ * the players score and the player can start a new game. After
+ * each game the profile name is saved with the score. The
+ * leaderboard displays the scores from highest to lowest.
  **/
 
 
@@ -77,13 +78,6 @@ public class Server extends Application{
 
                 String profileName = infoCenter.getProfileField();
                 tileBoard.setUserName(profileName);
-                try {
-                    leaderboard.readAllProfiles();
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-
-
 
                 infoCenter.updateTitle("Find the treasure!\n Best score possible: 80");
                 tileBoard.addAllTiles();
@@ -93,6 +87,8 @@ public class Server extends Application{
         };
     }
 
+    //starts the leaderboard button, opens the leaderboard when pressed
+    //also sorts the profiles text file to show the highest scores at the top
     private EventHandler<ActionEvent> openLeaderboard() {
         return new EventHandler<ActionEvent>() {
             @Override
@@ -113,6 +109,7 @@ public class Server extends Application{
 
 
 
+    //starts the button to start a new game after one has been finished
     private EventHandler<ActionEvent> startAnotherGame() {
         return new EventHandler<ActionEvent>() {
             @Override
