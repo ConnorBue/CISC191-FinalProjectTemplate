@@ -7,6 +7,22 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 
+import java.io.IOException;
+import java.util.Objects;
+
+public class TileBoard implements TreasureHuntConstants{
+
+    private final StackPane pane;
+    private final InfoCenter infoCenter;
+    private final Tile[][] playerBoard = new Tile[BOARD_H][BOARD_W];
+    private final String[][] solutionBoard = new String[BOARD_H][BOARD_W];
+    private Leaderboard leaderboard = new Leaderboard();
+
+    private int gameScore = 0;
+    private int turnsUsed = 0;
+    private boolean isEndOfGame = false;
+    private String currentUser;
+=======
 import java.util.Objects;
 
 public class TileBoard {
@@ -27,8 +43,11 @@ public class TileBoard {
         pane.setTranslateX(UIDimensions.APP_WIDTH / 2);
         pane.setTranslateY((UIDimensions.TILE_BOARD_HEIGHT / 2) + UIDimensions.INFO_CENTER_HEIGHT);
 
-        addAllTiles();
+
+
+        //addAllTiles();
     }
+        //class to receive a profile name from the user and find the profile associated with it
 
     //initialize the playerBoard and the solutionBoard 2-d arrays
     private void addAllTiles() {
@@ -36,6 +55,7 @@ public class TileBoard {
         //fill the playerBoard with tiles
         for (int row = 0; row < 5; row++) {
             for (int column = 0; column < 5; column++) {
+
                 Tile tile = new Tile();
                 tile.getStackPane().setTranslateX((column * 100) - 200);
                 tile.getStackPane().setTranslateY((row * 100));
@@ -45,13 +65,14 @@ public class TileBoard {
         }
 
         //fill the solution board with 5 treasure spots
-        for (int i = 0; i < 5; i++) {
-            solutionBoard[(int) (Math.random() * 5)][(int) (Math.random() * 5)] = "t";
+
+        for (int i = 0; i < TOTAL_TREASURE; i++) {
+            solutionBoard[(int) (Math.random() * BOARD_W)][(int) (Math.random() * BOARD_H)] = "t";
         }
 
         //fill the solution board with the rest as empty
-        for (int row = 0; row < 5; row++) {
-            for (int column = 0; column < 5; column++) {
+        for (int row = 0; row < BOARD_W; row++) {
+            for (int column = 0; column < BOARD_H; column++) {
                 if (Objects.equals(solutionBoard[row][column], "t")) return;
                 else {
                     solutionBoard[row][column] = "e";
@@ -61,32 +82,37 @@ public class TileBoard {
     }
 
     //method to reset both the board to their original states to be ready for a new game
-    public void startNewGame() {
-        isEndOfGame = false;
 
+    public void restartGame() {
+        isEndOfGame = false;
+        gameScore = 0;
+        turnsUsed = 0;
+        infoCenter.updateTitle("Find the treasure!\n Best score possible: 80");
+        infoCenter.hideStartButton();
         //set the players board back to blank
-        for (int row = 0; row < 5; row++) {
-            for (int column = 0; column < 5; column++) {
+        for (int row = 0; row < BOARD_W; row++) {
+            for (int column = 0; column < BOARD_H; column++) {
                 playerBoard[row][column].setValue("");
             }
         }
 
 
         //reset the solution board and create a new solution
-        for (int row = 0; row < 5; row++) {
-            for (int column = 0; column < 5; column++) {
+        for (int row = 0; row < BOARD_W; row++) {
+            for (int column = 0; column < BOARD_H; column++) {
                 solutionBoard[row][column] = ("");
             }
         }
 
         //add the 5 treasure spots
-        for (int i = 0; i < 5; i++) {
-            solutionBoard[(int) (Math.random() * 5)][(int) (Math.random() * 5)] = "t";
+        for (int i = 0; i < TOTAL_TREASURE; i++) {
+            solutionBoard[(int) (Math.random() * BOARD_W)][(int) (Math.random() * BOARD_H)] = "t";
         }
 
         //fill the solution board with the rest as empty
-        for (int row = 0; row < 5; row++) {
-            for (int column = 0; column < 5; column++) {
+        for (int row = 0; row < BOARD_W; row++) {
+            for (int column = 0; column < BOARD_H; column++) {
+
                 if (Objects.equals(solutionBoard[row][column], "t")) return;
                 else {
                     solutionBoard[row][column] = "e";
@@ -95,6 +121,11 @@ public class TileBoard {
         }
 
     }
+
+    public void setUserName(String nameToAdd){
+        currentUser = nameToAdd;
+    }
+
 
     //getter method
     public StackPane getStackPane() {
@@ -112,7 +143,8 @@ public class TileBoard {
 
     //method to check to see if the player has found all the treasure
     //if all the treasure is found, call endGame() to display game won
-    public void checkForWinner() {
+    public void checkForWinner() throws IOException {
+
         //find total treasure amount
         int totalTreasure = 0;
 
@@ -129,21 +161,30 @@ public class TileBoard {
             for (int column = 0; column < 5; column++) {
                 if (Objects.equals(playerBoard[row][column].getValue(), "T")) {
                     foundTreasure++;
-                    ;
                 }
             }
         }
         if (totalTreasure == foundTreasure) {
             endGame();
+            infoCenter.updateTitle("Game Over!\nFinal score: " + gameScore + " points");
         }
     }
 
     //method to end the game and display the victory message
     //shows the start new game button to give the player the option to start a new game
-    private void endGame() {
+
+    private void endGame() throws IOException {
         isEndOfGame = true;
+        leaderboard.writeNewGame(currentUser, gameScore);
         infoCenter.updateTitle("You have found all the treasure!");
         infoCenter.showStartButton();
+    }
+
+
+
+    private void updateScore() {
+        turnsUsed++;
+        gameScore = 100 - (turnsUsed*4);
     }
 
     //constructor class to give every tile a label which will display if the guess was correct.
@@ -174,7 +215,13 @@ public class TileBoard {
                     //find if treasure is found and update box
                     label.setText(checkInput((int) (label.getParent().getBoundsInParent().getMinX() + 225) / 100,
                             (int) (label.getParent().getBoundsInParent().getMinY() + 25) / 100));
-                    checkForWinner();
+                    try {
+                        checkForWinner();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    updateScore();
+
                 }
             });
         }

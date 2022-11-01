@@ -8,6 +8,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+
 
 
 /**Connor Bue
@@ -27,6 +31,9 @@ public class Server extends Application{
     private InfoCenter infoCenter;
     private TileBoard tileBoard;
 
+    private Leaderboard leaderboard;
+
+
     @Override
     public void start(Stage primaryStage)
     {
@@ -36,12 +43,85 @@ public class Server extends Application{
             initLayout(root);
             primaryStage.setScene(scene);
             primaryStage.show();
-        }
         catch(Exception e)
         {
             e.printStackTrace();
         }
     }
+
+    //initializes both portions of the gui
+    private void initLayout(BorderPane root)
+    {
+        initInfoCenter(root);
+        initTileBoard(root);
+
+    }
+
+    //initialize info center portion of panel
+    private void initInfoCenter(BorderPane root)
+    {
+        leaderboard = new Leaderboard();
+        infoCenter = new InfoCenter();
+        infoCenter.setStartButtonOnAction(profileEntered());
+        infoCenter.additionalGameButton(startAnotherGame());
+        infoCenter.openLeaderboardAction(openLeaderboard());
+        root.getChildren().add(infoCenter.getStackPane());
+    }
+
+
+
+
+    //first time the game starts, asks for profile name and once it gets one it starts the game
+    private EventHandler<ActionEvent> profileEntered()
+    {
+        return new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+
+                String profileName = infoCenter.getProfileField();
+                tileBoard.setUserName(profileName);
+                try {
+                    leaderboard.readAllProfiles();
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+
+
+
+                infoCenter.updateTitle("Find the treasure!\n Best score possible: 80");
+                tileBoard.addAllTiles();
+                infoCenter.hideProfileGrid();
+                infoCenter.hideLeaderboardButton();
+            }
+        };
+    }
+
+    //opens the leaderboard window when the button is clicked
+    private EventHandler<ActionEvent> openLeaderboard() {
+        return new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+
+                ArrayList<ProfileData> profileListUnsorted;
+                try {
+                    profileListUnsorted = leaderboard.readAllProfiles();
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+
+                leaderboard.displayLeaderboard(leaderboard.sortProfile(profileListUnsorted));
+
+            }
+        };
+    }
+
+
+
+    private EventHandler<ActionEvent> startAnotherGame() {
+        return new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                tileBoard.restartGame();
 
     //initializes both portions of the gui
     private void initLayout(BorderPane root)
@@ -69,6 +149,7 @@ public class Server extends Application{
                 infoCenter.hideStartButton();
                 infoCenter.updateTitle("Find the treasure!");
                 tileBoard.startNewGame();
+
             }
         };
     }
